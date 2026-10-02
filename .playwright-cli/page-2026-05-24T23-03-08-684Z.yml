@@ -32,7 +32,7 @@
       - text: /
       - code [ref=e23]: getSubagentsService
       - text: ). Consumers declare this package as an optional peer dependency and use dynamic import for compile-time types. The runtime bridge is
-      - code [ref=e24]: Symbol.for("@gotgenes/pi-subagents:service")
+      - code [ref=e24]: Symbol.for("@normful/pi-subagents:service")
       - text: "on"
       - code [ref=e25]: globalThis
       - text: — no separate API package.
@@ -151,7 +151,7 @@
       - /url: "#cross-extension-architecture"
       - text: "#"
     - text: Cross-extension architecture
-  - generic [ref=e92]: "flowchart TD subgraph core[\"@gotgenes/pi-subagents (this package)\"] direction TB exports[\"SubagentsService interface\\npublish / getSubagentsService()\\nSubagentRecord, SubagentStatus, LifetimeUsage\\nSUBAGENT_EVENTS constants\"] engine[\"Agent + get_subagent_result + steer_subagent tools\\nAgentManager, agent-runner, agent-types\\npublishSubagentsService() called at init\"] ui_int[\"Internal UI: widget, viewer, /agents menu\\n(candidate for extraction to pi-subagents-ui)\"] end core -- \"Symbol.for() on globalThis\" --> sched[\"scheduling extension\\n(hypothetical)\"] core -- \"Symbol.for() on globalThis\" --> subui[\"pi-subagents-ui\\n(deferred)\"] core -- \"Symbol.for() on globalThis\" --> future[\"any future extension\"]"
+  - generic [ref=e92]: "flowchart TD subgraph core[\"@normful/pi-subagents (this package)\"] direction TB exports[\"SubagentsService interface\\npublish / getSubagentsService()\\nSubagentRecord, SubagentStatus, LifetimeUsage\\nSUBAGENT_EVENTS constants\"] engine[\"Agent + get_subagent_result + steer_subagent tools\\nAgentManager, agent-runner, agent-types\\npublishSubagentsService() called at init\"] ui_int[\"Internal UI: widget, viewer, /agents menu\\n(candidate for extraction to pi-subagents-ui)\"] end core -- \"Symbol.for() on globalThis\" --> sched[\"scheduling extension\\n(hypothetical)\"] core -- \"Symbol.for() on globalThis\" --> subui[\"pi-subagents-ui\\n(deferred)\"] core -- \"Symbol.for() on globalThis\" --> future[\"any future extension\"]"
   - paragraph [ref=e93]:
     - text: Consumers call
     - code [ref=e94]: getSubagentsService()?.spawn(...)
@@ -266,21 +266,21 @@
     - text: The
     - code [ref=e156]: SubagentsService
     - text: interface, accessor functions, and serializable types are exported from
-    - code [ref=e157]: "@gotgenes/pi-subagents"
+    - code [ref=e157]: "@normful/pi-subagents"
     - text: via the
     - code [ref=e158]: ./service
     - text: export map entry. No separate API package is needed.
   - paragraph [ref=e159]: "Consumers declare this package as an optional peer dependency:"
   - generic [ref=e160]:
     - code [ref=e162]:
-      - text: "{ \"peerDependencies\": { \"@gotgenes/pi-subagents\": \">=5.0.0\" }, \"peerDependenciesMeta\": { \"@gotgenes/pi-subagents\": { \"optional\":"
+      - text: "{ \"peerDependencies\": { \"@normful/pi-subagents\": \">=5.0.0\" }, \"peerDependenciesMeta\": { \"@normful/pi-subagents\": { \"optional\":"
       - generic [ref=e163]: "true"
       - text: "} } }"
     - button [ref=e164] [cursor=pointer]:
       - img [ref=e165]
   - paragraph [ref=e168]: "At runtime, consumers use dynamic import for type-safe access to the accessor functions:"
   - generic [ref=e169]:
-    - code [ref=e171]: "const { getSubagentsService } = await import(\"@gotgenes/pi-subagents\"); const svc = getSubagentsService(); if (svc) { svc.spawn(\"Explore\", \"Check for stale TODOs\"); }"
+    - code [ref=e171]: "const { getSubagentsService } = await import(\"@normful/pi-subagents\"); const svc = getSubagentsService(); if (svc) { svc.spawn(\"Explore\", \"Check for stale TODOs\"); }"
     - button [ref=e172] [cursor=pointer]:
       - img [ref=e173]
   - paragraph [ref=e176]:
@@ -289,7 +289,7 @@
     - text: instance per extension with
     - code [ref=e178]: "moduleCache: false"
     - text: ", so module-scoped singletons don't survive across extensions. The accessor functions use"
-    - code [ref=e179]: Symbol.for("@gotgenes/pi-subagents:service")
+    - code [ref=e179]: Symbol.for("@normful/pi-subagents:service")
     - text: "on"
     - code [ref=e180]: globalThis
     - text: ", which is process-global by spec, to bridge this gap. The dynamic import provides compile-time types; the"
@@ -358,7 +358,7 @@
     - text: Accessor pattern
   - generic [ref=e214]:
     - code [ref=e216]:
-      - text: const SERVICE_KEY = Symbol.for("@gotgenes/pi-subagents:service"); export function publishSubagentsService(
+      - text: const SERVICE_KEY = Symbol.for("@normful/pi-subagents:service"); export function publishSubagentsService(
       - generic [ref=e217]: "service: SubagentsService"
       - text: "): void { (globalThis as Record<symbol, unknown>)[SERVICE_KEY] = service; } export function getSubagentsService("
       - text: "): SubagentsService | undefined { return (globalThis as Record<symbol, unknown>)[SERVICE_KEY] as | SubagentsService | undefined; }"
@@ -675,7 +675,7 @@
       - text: "#"
     - text: AgentSpawnConfig — ParentSessionInfo extracted (done,
     - link "#166" [ref=e480] [cursor=pointer]:
-      - /url: https://github.com/gotgenes/pi-packages/issues/166
+      - /url: https://github.com/normful/pi-packages/issues/166
     - text: )
   - paragraph [ref=e481]:
     - text: The
@@ -702,7 +702,7 @@
       - text: "#"
     - text: RunOptions (12 fields → extract RunContext) — done (
     - link "#169" [ref=e498] [cursor=pointer]:
-      - /url: https://github.com/gotgenes/pi-packages/issues/169
+      - /url: https://github.com/normful/pi-packages/issues/169
     - text: )
   - paragraph [ref=e499]:
     - text: The
@@ -746,7 +746,7 @@
       - text: "#"
     - text: SessionConfig (11 fields → extract ToolFilterConfig) — done (
     - link "#168" [ref=e524] [cursor=pointer]:
-      - /url: https://github.com/gotgenes/pi-packages/issues/168
+      - /url: https://github.com/normful/pi-packages/issues/168
     - text: )
   - paragraph [ref=e525]:
     - text: The tool-filtering cluster (
@@ -772,7 +772,7 @@
       - text: "#"
     - text: RunnerIO (9 methods → 2 focused interfaces) — done (
     - link "#167" [ref=e536] [cursor=pointer]:
-      - /url: https://github.com/gotgenes/pi-packages/issues/167
+      - /url: https://github.com/normful/pi-packages/issues/167
     - text: )
   - paragraph [ref=e537]: "The IO boundary was split into two focused interfaces:"
   - generic [ref=e538]:
@@ -1265,10 +1265,10 @@
     - text: Relationship with upstream
   - paragraph [ref=e863]:
     - text: This fork (
-    - code [ref=e864]: "@gotgenes/pi-subagents"
+    - code [ref=e864]: "@normful/pi-subagents"
     - text: in the
     - link "gotgenes/pi-packages" [ref=e865] [cursor=pointer]:
-      - /url: https://github.com/gotgenes/pi-packages
+      - /url: https://github.com/normful/pi-packages
     - text: monorepo) is a hard fork of
     - link "tintinweb/pi-subagents" [ref=e866] [cursor=pointer]:
       - /url: https://github.com/tintinweb/pi-subagents

@@ -1,5 +1,5 @@
 {
-  "name": "@gotgenes/pi-github-tools",
+  "name": "@normful/pi-github-tools",
   "version": "5.0.1",
   "description": "Pi extension providing deterministic GitHub CI, release, and issue tools.",
   "type": "module",
@@ -35,12 +35,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gotgenes/pi-packages.git",
+    "url": "git+https://github.com/normful/pi-packages.git",
     "directory": "packages/pi-github-tools"
   },
-  "homepage": "https://github.com/gotgenes/pi-packages/tree/main/packages/pi-github-tools#readme",
+  "homepage": "https://github.com/normful/pi-packages/tree/main/packages/pi-github-tools#readme",
   "bugs": {
-    "url": "https://github.com/gotgenes/pi-packages/issues"
+    "url": "https://github.com/normful/pi-packages/issues"
   },
   "engines": {
     "node": ">=22"

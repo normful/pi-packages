@@ -318,9 +318,19 @@ describe("createSubagentSession — recursion guard", () => {
 
     expect(io.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        excludeTools: ["subagent", "get_subagent_result", "steer_subagent"],
+        excludeTools: ["subagent", "Agent", "get_subagent_result", "steer_subagent"],
       }),
     );
+  });
+
+  it("denies both the `subagent` tool and its `Agent` alias", async () => {
+    arrangeFactory();
+
+    await createSubagentSession({ snapshot: STUB_SNAPSHOT, type: "Explore" }, defaultDeps());
+
+    const opts = io.createSession.mock.calls[0][0] as CreateSessionOptions;
+    expect(opts.excludeTools).toContain("subagent");
+    expect(opts.excludeTools).toContain("Agent");
   });
 
   it("leaves the child's active tool set untouched after bind", async () => {
@@ -329,6 +339,41 @@ describe("createSubagentSession — recursion guard", () => {
     await createSubagentSession({ snapshot: STUB_SNAPSHOT, type: "Explore" }, defaultDeps());
 
     expect(session.setActiveToolsByName).not.toHaveBeenCalled();
+  });
+});
+
+describe("createSubagentSession — legacy isolated agent", () => {
+  // A file that declares `isolated: true` runs self-contained: no skills, no
+  // extensions, and no inherited parent identity.
+  const isolatedDeps = () =>
+    createSubagentSessionDeps({ io, exec, registry: createAgentLookup({ isolated: true }) });
+
+  it("builds the child loader skills-off and extensions-off", async () => {
+    arrangeFactory();
+
+    await createSubagentSession({ snapshot: STUB_SNAPSHOT, type: "Explore" }, isolatedDeps());
+
+    expect(io.createResourceLoader).toHaveBeenCalledWith(
+      expect.objectContaining({ noExtensions: true, noSkills: true }),
+    );
+  });
+
+  it("suppresses parent-identity inheritance at the prompt seam", async () => {
+    arrangeFactory();
+
+    await createSubagentSession({ snapshot: STUB_SNAPSHOT, type: "Explore" }, isolatedDeps());
+
+    expect(io.assemblerIO.buildAgentPrompt.mock.calls[0]?.[3]).toBeUndefined();
+  });
+
+  it("leaves an ordinary agent's loader flags unset", async () => {
+    arrangeFactory();
+
+    await createSubagentSession({ snapshot: STUB_SNAPSHOT, type: "Explore" }, defaultDeps());
+
+    const opts = io.createResourceLoader.mock.calls[0][0];
+    expect(opts).not.toHaveProperty("noExtensions");
+    expect(opts).not.toHaveProperty("noSkills");
   });
 });
 

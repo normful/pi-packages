@@ -7,6 +7,7 @@ import { basename, join } from "node:path";
 import { getAgentDir, parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { BUILTIN_TOOL_NAMES } from "#src/config/agent-types";
 import { isLockableField, type LockDeclaration } from "#src/config/invocation-config";
+import { normalizeLegacyFrontmatter } from "#src/config/legacy-frontmatter";
 import { parseThinkingLevel, thinkingLevelError } from "#src/config/thinking-level";
 import { debugLog } from "#src/debug";
 import type { AgentConfig } from "#src/types";
@@ -55,11 +56,16 @@ function loadFromDir(dir: string, agents: Map<string, AgentConfig>, source: "pro
 
     const { frontmatter: fm, body } = parseFrontmatter(content);
 
+    // Read the file through the legacy normalizer before building the config,
+    // so a tintinweb-dialect `ext:` selector, `name:`, `extensions:`, or
+    // `isolated:` is handled in one place and never reaches the loader raw.
+    const legacy = normalizeLegacyFrontmatter(fm, name);
+
     agents.set(name, {
       name,
       displayName: str(fm.display_name),
       description: str(fm.description) ?? name,
-      toolNames: listField(fm.tools, BUILTIN_TOOL_NAMES),
+      toolNames: listField(legacy.toolNames, BUILTIN_TOOL_NAMES),
       model: str(fm.model),
       thinking: thinkingLevel(fm.thinking, name),
       maxTurns: nonNegativeInt(fm.max_turns),
@@ -67,6 +73,7 @@ function loadFromDir(dir: string, agents: Map<string, AgentConfig>, source: "pro
       promptMode: fm.prompt_mode === "replace" ? "replace" : "append",
       inheritContext: fm.inherit_context != null ? fm.inherit_context === true : undefined,
       runInBackground: fm.run_in_background != null ? fm.run_in_background === true : undefined,
+      isolated: legacy.isolated,
       locked: lockDeclaration(fm.locked, name),
       enabled: fm.enabled !== false,  // default true; explicitly false disables
       source,

@@ -78,6 +78,12 @@ export interface AgentConfig extends AgentIdentity, AgentPromptConfig {
   inheritContext?: boolean;
   /** Default for spawn: run in background. undefined = caller decides. */
   runInBackground?: boolean;
+  /**
+   * Legacy tintinweb `isolated:` key. When true the child is built skills-off
+   * and extensions-off, and inherits no parent identity — its prompt falls back
+   * to the generic base. Omitted — an ordinary child that inherits everything.
+   */
+  isolated?: boolean;
   /** Fields a `subagent` tool caller may not override. Omitted — every field is overridable. */
   locked?: LockDeclaration;
   /** One-line usage guideline for the subagent tool's Guidelines: block. Omitted — no guideline line. */

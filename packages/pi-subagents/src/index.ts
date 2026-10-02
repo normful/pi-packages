@@ -2,7 +2,7 @@
  * pi-agents — A pi extension providing focused, in-process autonomous sub-agents.
  *
  * Tools:
- *   Agent             — LLM-callable: spawn a sub-agent
+ *   subagent / Agent     — LLM-callable: spawn a sub-agent
  *   get_subagent_result  — LLM-callable: check background agent status/result
  *   steer_subagent       — LLM-callable: send a steering message to a running agent
  *
@@ -243,8 +243,19 @@ export default function (pi: ExtensionAPI) {
   pi.on("turn_start", () => widgetEvents.handleTurnStart());
 
   // ---- Agent tool ----
-
-  pi.registerTool(new AgentTool(manager, runtime, settings, registry, getAgentDir()).toToolDefinition());
+  // `subagent` is this package's name for the spawn tool; the wider ecosystem
+  // (rpiv-mono among others) calls it `Agent`. Both are registered, the alias
+  // backed by the same definition and handler, so existing `subagent` callers
+  // keep working while the canonical name is available too.
+  const agentToolDefinition = new AgentTool(
+    manager,
+    runtime,
+    settings,
+    registry,
+    getAgentDir(),
+  ).toToolDefinition();
+  pi.registerTool(agentToolDefinition);
+  pi.registerTool({ ...agentToolDefinition, name: "Agent", label: "Agent" });
 
   // ---- get_subagent_result tool ----
 

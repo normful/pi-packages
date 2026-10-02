@@ -180,6 +180,83 @@ Comma entry.`);
     });
   });
 
+  describe("legacy tintinweb frontmatter", () => {
+    it("strips an `ext:<pkg>/` selector so the bare registered name allows it", () => {
+      writeAgent("webtools", `---
+tools: ext:rpiv-web-tools/web_search, read
+---
+
+Web tools.`);
+
+      expect(loadCustomAgents(tmpDir).get("webtools")!.toolNames).toEqual(["web_search", "read"]);
+    });
+
+    it("strips selectors in a YAML sequence and leaves bare names alone", () => {
+      writeAgent("mixed", `---
+tools:
+  - "ext:rpiv-web-tools/web_search"
+  - grep
+---
+
+Mixed.`);
+
+      expect(loadCustomAgents(tmpDir).get("mixed")!.toolNames).toEqual(["web_search", "grep"]);
+    });
+
+    it("keeps the filename-derived name when `name:` disagrees — no re-key", () => {
+      writeAgent("filename", `---
+name: declared
+---
+
+Body.`);
+
+      const agents = loadCustomAgents(tmpDir);
+      expect(agents.has("filename")).toBe(true);
+      expect(agents.has("declared")).toBe(false);
+      expect(agents.get("filename")!.name).toBe("filename");
+    });
+
+    it("accepts an `extensions:` key as a loading no-op", () => {
+      writeAgent("withed", `---
+extensions: rpiv-web-tools, rpiv-mcp
+tools: read
+---
+
+Body.`);
+
+      const agent = loadCustomAgents(tmpDir).get("withed")!;
+      expect(agent.toolNames).toEqual(["read"]);
+      expect(agent.isolated).toBeUndefined();
+    });
+
+    it("parses `isolated: true` alongside its coupled `skills:`", () => {
+      writeAgent("sandboxed", `---
+isolated: true
+skills: false
+tools: read
+---
+
+Self-contained.`);
+
+      const agent = loadCustomAgents(tmpDir).get("sandboxed")!;
+      expect(agent.isolated).toBe(true);
+      expect(agent.toolNames).toEqual(["read"]);
+    });
+
+    it("leaves `isolated` undefined for an ordinary agent", () => {
+      writeAgent("ordinary", `---
+description: Ordinary
+tools: read, grep
+---
+
+Ordinary.`);
+
+      const agent = loadCustomAgents(tmpDir).get("ordinary")!;
+      expect(agent.isolated).toBeUndefined();
+      expect(agent.toolNames).toEqual(["read", "grep"]);
+    });
+  });
+
   describe("locked field", () => {
     it("is undefined when the key is absent", () => {
       writeAgent("open", `---\nmodel: haiku\n---\n\nOpen.`);

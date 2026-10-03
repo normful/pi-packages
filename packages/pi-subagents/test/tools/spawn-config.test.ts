@@ -413,3 +413,55 @@ describe("resolveSpawnConfig — prompt and rawType passthrough", () => {
     expect(result.identity.rawType).toBe("Explore");
   });
 });
+
+describe("resolveSpawnConfig — model scope", () => {
+  const available = [
+    makeModel({ provider: "anthropic", id: "claude-sonnet" }),
+    makeModel({ provider: "anthropic", id: "claude-haiku" }),
+  ];
+  const scopedRegistry = {
+    find: (provider: string, modelId: string) =>
+      available.find((m) => m.provider === provider && m.id === modelId),
+    getAll: () => available,
+    getAvailable: () => available,
+  };
+  const allowed = new Set(["anthropic/claude-sonnet"]);
+  const spawn = (params: Record<string, unknown>, info = makeModelInfo({ modelRegistry: scopedRegistry }), scope?: Parameters<typeof resolveSpawnConfig>[4]) =>
+    resolveSpawnConfig(params, testRegistry, info, defaultSettings, scope);
+  const base = { subagent_type: "general-purpose", prompt: "p", description: "d" };
+
+  it("ignores scope entirely when no scope input is supplied", () => {
+    const result = spawn({ ...base, model: "haiku" }, makeModelInfo({ modelRegistry: scopedRegistry }));
+    expect("error" in result).toBe(false);
+  });
+
+  it("refuses a caller-supplied out-of-scope model", () => {
+    const result = spawn({ ...base, model: "haiku" }, undefined, { enabled: true, allowed });
+    expect("error" in result && result.error).toContain("not in scope");
+  });
+
+  it("accepts a caller-supplied in-scope model", () => {
+    const result = spawn({ ...base, model: "sonnet" }, undefined, { enabled: true, allowed });
+    expect("error" in result).toBe(false);
+  });
+
+  it("warns rather than refuses an inherited out-of-scope model", () => {
+    const result = spawn(
+      base,
+      makeModelInfo({ parentModel: makeModel({ provider: "google", id: "gemma" }) }),
+      { enabled: true, allowed },
+    );
+    if ("error" in result) return;
+    expect(result.notes.some((note) => note.includes("out-of-scope"))).toBe(true);
+  });
+
+  it("adds no note when the model is in scope", () => {
+    const result = spawn(
+      base,
+      makeModelInfo({ parentModel: makeModel({ provider: "anthropic", id: "claude-sonnet" }) }),
+      { enabled: true, allowed },
+    );
+    if ("error" in result) return;
+    expect(result.notes).toEqual([]);
+  });
+});

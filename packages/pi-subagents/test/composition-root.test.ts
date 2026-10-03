@@ -161,6 +161,7 @@ async function captureSessionFactoryIO(parentRegistry: unknown) {
     },
     undefined,
     undefined,
+    { cwd: "/tmp" },
   );
 
   expect(createSubagentSession).toHaveBeenCalled();
@@ -280,6 +281,7 @@ describe("composition root: spawn tool alias", () => {
         },
         undefined,
         undefined,
+        { cwd: process.cwd() },
       );
 
     await call("subagent");
@@ -441,6 +443,9 @@ describe("composition root: prompt-inheritance wiring", () => {
       },
       undefined,
       undefined,
+      // The tool reads the invocation's cwd for model-scope resolution; the
+      // default (scopeModels off) short-circuits before any file IO.
+      { cwd: process.cwd() },
     );
 
     return vi.mocked(createSubagentSession).mock.calls[0];

@@ -229,6 +229,41 @@ Body.`);
       expect(agent.isolated).toBeUndefined();
     });
 
+    it("subtracts `disallowed_tools` from the effective allowlist", () => {
+      writeAgent("denied", `---
+tools: read, bash, write
+disallowed_tools: bash
+---
+
+Denied.`);
+
+      expect(loadCustomAgents(tmpDir).get("denied")!.toolNames).toEqual(["read", "write"]);
+    });
+
+    it("subtracts `disallowed_tools` from the built-in default when `tools:` is omitted", () => {
+      writeAgent("denydefault", `---
+disallowed_tools: bash, write
+---
+
+Deny defaults.`);
+
+      const toolNames = loadCustomAgents(tmpDir).get("denydefault")!.toolNames!;
+      expect(toolNames).not.toContain("bash");
+      expect(toolNames).not.toContain("write");
+      expect(toolNames).toContain("read");
+    });
+
+    it("ignores a `disallowed_tools` entry the allowlist never named", () => {
+      writeAgent("denyextra", `---
+tools: read, grep
+disallowed_tools: bash
+---
+
+Deny extra.`);
+
+      expect(loadCustomAgents(tmpDir).get("denyextra")!.toolNames).toEqual(["read", "grep"]);
+    });
+
     it("parses `isolated: true` alongside its coupled `skills:`", () => {
       writeAgent("sandboxed", `---
 isolated: true

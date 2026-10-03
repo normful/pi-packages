@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeLegacyFrontmatter } from "#src/config/legacy-frontmatter";
+import { normalizeLegacyFrontmatter, withoutDisallowedTools } from "#src/config/legacy-frontmatter";
 
 describe("normalizeLegacyFrontmatter — tools selectors", () => {
   it("strips a leading `ext:<pkg>/` from a comma-separated scalar", () => {
@@ -42,6 +42,42 @@ describe("normalizeLegacyFrontmatter — tools selectors", () => {
   it("collapses the empty forms the loader turns into no tools", () => {
     expect(normalizeLegacyFrontmatter({ tools: "" }, "a").toolNames).toEqual([]);
     expect(normalizeLegacyFrontmatter({ tools: [] }, "a").toolNames).toEqual([]);
+  });
+});
+
+describe("normalizeLegacyFrontmatter — disallowed_tools", () => {
+  it("reads a comma-separated scalar and strips selectors", () => {
+    const { disallowedToolNames } = normalizeLegacyFrontmatter(
+      { disallowed_tools: "ext:rpiv-web-tools/web_search, bash" },
+      "a",
+    );
+
+    expect(disallowedToolNames).toEqual(["web_search", "bash"]);
+  });
+
+  it("reads a YAML sequence", () => {
+    expect(
+      normalizeLegacyFrontmatter({ disallowed_tools: ["bash", "write"] }, "a").disallowedToolNames,
+    ).toEqual(["bash", "write"]);
+  });
+
+  it("is undefined when the key is absent", () => {
+    expect(normalizeLegacyFrontmatter({}, "a").disallowedToolNames).toBeUndefined();
+  });
+});
+
+describe("withoutDisallowedTools", () => {
+  it("subtracts named tools and preserves the allowlist order", () => {
+    expect(withoutDisallowedTools(["read", "bash", "write"], ["bash"])).toEqual(["read", "write"]);
+  });
+
+  it("is a no-op when the denylist is absent or empty", () => {
+    expect(withoutDisallowedTools(["read"], undefined)).toEqual(["read"]);
+    expect(withoutDisallowedTools(["read"], [])).toEqual(["read"]);
+  });
+
+  it("never introduces a tool the allowlist did not name", () => {
+    expect(withoutDisallowedTools(["read"], ["bash"])).toEqual(["read"]);
   });
 });
 

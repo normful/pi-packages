@@ -1072,4 +1072,75 @@ describe("SettingsManager", () => {
       ).not.toThrow();
     });
   });
+
+  describe("scopeModels", () => {
+    let globalDir: string;
+    let projectDir: string;
+
+    beforeEach(() => {
+      globalDir = mkdtempSync(join(tmpdir(), "pi-sm-scope-global-"));
+      projectDir = mkdtempSync(join(tmpdir(), "pi-sm-scope-project-"));
+    });
+
+    afterEach(() => {
+      rmSync(globalDir, { recursive: true, force: true });
+      rmSync(projectDir, { recursive: true, force: true });
+    });
+
+    function writeProjectSettings(obj: unknown) {
+      mkdirSync(join(projectDir, ".pi"), { recursive: true });
+      writeFileSync(join(projectDir, ".pi", "subagents.json"), JSON.stringify(obj));
+    }
+
+    it("defaults to false", () => {
+      const sm = new SettingsManager({ emit: vi.fn(), cwd: "/tmp", agentDir: "/nonexistent" });
+      expect(sm.scopeModels).toBe(false);
+    });
+
+    it("loads true from disk", () => {
+      writeProjectSettings({ scopeModels: true });
+      const sm = new SettingsManager({ emit: vi.fn(), cwd: projectDir, agentDir: globalDir });
+      sm.load();
+      expect(sm.scopeModels).toBe(true);
+    });
+
+    it("clears back to false when the key is removed", () => {
+      writeProjectSettings({ scopeModels: true });
+      const sm = new SettingsManager({ emit: vi.fn(), cwd: projectDir, agentDir: globalDir });
+      sm.load();
+      expect(sm.scopeModels).toBe(true);
+
+      writeProjectSettings({});
+      sm.load();
+      expect(sm.scopeModels).toBe(false);
+    });
+
+    it("drops a non-boolean value", () => {
+      writeProjectSettings({ scopeModels: "yes" });
+      const sm = new SettingsManager({ emit: vi.fn(), cwd: projectDir, agentDir: globalDir });
+      sm.load();
+      expect(sm.scopeModels).toBe(false);
+    });
+
+    it("appears in the snapshot only when on", () => {
+      const off = new SettingsManager({ emit: vi.fn(), cwd: "/tmp", agentDir: "/nonexistent" });
+      expect(off.snapshot().scopeModels).toBeUndefined();
+
+      writeProjectSettings({ scopeModels: true });
+      const on = new SettingsManager({ emit: vi.fn(), cwd: projectDir, agentDir: globalDir });
+      on.load();
+      expect(on.snapshot().scopeModels).toBe(true);
+    });
+
+    it("survives an unrelated settings edit", () => {
+      writeProjectSettings({ scopeModels: true });
+      const sm = new SettingsManager({ emit: vi.fn(), cwd: projectDir, agentDir: globalDir });
+      sm.load();
+      sm.applyGraceTurns(9);
+
+      const persisted = JSON.parse(readFileSync(join(projectDir, ".pi", "subagents.json"), "utf-8"));
+      expect(persisted.scopeModels).toBe(true);
+      expect(persisted.graceTurns).toBe(9);
+    });
+  });
 });

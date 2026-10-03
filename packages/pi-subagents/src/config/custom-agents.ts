@@ -7,7 +7,7 @@ import { basename, join } from "node:path";
 import { getAgentDir, parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import { BUILTIN_TOOL_NAMES } from "#src/config/agent-types";
 import { isLockableField, type LockDeclaration } from "#src/config/invocation-config";
-import { normalizeLegacyFrontmatter } from "#src/config/legacy-frontmatter";
+import { normalizeLegacyFrontmatter, withoutDisallowedTools } from "#src/config/legacy-frontmatter";
 import { parseThinkingLevel, thinkingLevelError } from "#src/config/thinking-level";
 import { debugLog } from "#src/debug";
 import type { AgentConfig } from "#src/types";
@@ -65,7 +65,10 @@ function loadFromDir(dir: string, agents: Map<string, AgentConfig>, source: "pro
       name,
       displayName: str(fm.display_name),
       description: str(fm.description) ?? name,
-      toolNames: listField(legacy.toolNames, BUILTIN_TOOL_NAMES),
+      toolNames: withoutDisallowedTools(
+        listField(legacy.toolNames, BUILTIN_TOOL_NAMES),
+        legacy.disallowedToolNames,
+      ),
       model: str(fm.model),
       thinking: thinkingLevel(fm.thinking, name),
       maxTurns: nonNegativeInt(fm.max_turns),

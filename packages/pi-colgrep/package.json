@@ -1,5 +1,5 @@
 {
-  "name": "@gotgenes/pi-colgrep",
+  "name": "@normful/pi-colgrep",
   "version": "1.5.4",
   "description": "Pi extension that integrates ColGrep semantic code search as an agent tool.",
   "type": "module",
@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gotgenes/pi-packages.git",
+    "url": "git+https://github.com/normful/pi-packages.git",
     "directory": "packages/pi-colgrep"
   },
-  "homepage": "https://github.com/gotgenes/pi-packages/tree/main/packages/pi-colgrep#readme",
+  "homepage": "https://github.com/normful/pi-packages/tree/main/packages/pi-colgrep#readme",
   "bugs": {
-    "url": "https://github.com/gotgenes/pi-packages/issues"
+    "url": "https://github.com/normful/pi-packages/issues"
   },
   "engines": {
     "node": ">=22"

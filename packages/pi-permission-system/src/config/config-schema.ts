@@ -445,7 +445,7 @@ export const unifiedConfigSchema = z
     description:
       "Unified config file combining runtime knobs and flat permission policy for pi-permission-system.",
     markdownDescription:
-      "Unified config file combining runtime knobs and flat permission policy for [pi-permission-system](https://github.com/gotgenes/pi-packages/tree/main/packages/pi-permission-system).\n\nPlace at `~/.pi/agent/extensions/pi-permission-system/config.json` (global) or `<project>/.pi/extensions/pi-permission-system/config.json` (project).",
+      "Unified config file combining runtime knobs and flat permission policy for [pi-permission-system](https://github.com/normful/pi-packages/tree/main/packages/pi-permission-system).\n\nPlace at `~/.pi/agent/extensions/pi-permission-system/config.json` (global) or `<project>/.pi/extensions/pi-permission-system/config.json` (project).",
   });
 
 /** A permission decision. */

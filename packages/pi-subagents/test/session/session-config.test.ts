@@ -390,3 +390,28 @@ describe("assembleSessionConfig — prompt inheritance", () => {
     expect(mockLoadProjectContext).not.toHaveBeenCalled();
   });
 });
+
+describe("assembleSessionConfig — legacy isolated agent", () => {
+  it("surfaces `isolated: true` and builds the prompt with no inherited identity", () => {
+    const config = exploreConfig({ isolated: true });
+    mockResolveAgentConfig.mockReturnValueOnce(config);
+
+    const result = assembleSessionConfig("Explore", ctx, {}, mockEnv, mockAgentLookup, mockIO);
+
+    expect(result.isolated).toBe(true);
+    expect(mockBuildAgentPrompt).toHaveBeenCalledWith(
+      config,
+      "/tmp",
+      mockEnv,
+      undefined,
+      mockLoadProjectContext,
+    );
+  });
+
+  it("inherits the parent identity and leaves `isolated` false for an ordinary agent", () => {
+    const result = assembleSessionConfig("Explore", ctx, {}, mockEnv, mockAgentLookup, mockIO);
+
+    expect(result.isolated).toBe(false);
+    expect(mockBuildAgentPrompt.mock.calls[0]?.[3]).toBeDefined();
+  });
+});

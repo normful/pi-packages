@@ -4,7 +4,7 @@
  * The config carries the *model mechanism* half of ADR 0007's config split
  * (provider / model / instructions / patterns / timeout); the *chain policy*
  * half (`authorizerChain`, the delegation envelope) lives in
- * `@gotgenes/pi-permission-system`. This package reads only what it uses.
+ * `@normful/pi-permission-system`. This package reads only what it uses.
  */
 
 import { z } from "zod";

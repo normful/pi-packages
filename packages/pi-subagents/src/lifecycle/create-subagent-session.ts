@@ -41,8 +41,11 @@ import type {
  * it rebuilds the child's tool registry — including the rebuild triggered by a
  * child extension registering a tool of its own. Filtering the active set once
  * after `bindExtensions` would be undone by that rebuild (#725).
+ *
+ * `Agent` is the alias `subagent` is also registered under, so a child that
+ * inherits the alias cannot spawn grandchildren through it either.
  */
-const EXCLUDED_TOOL_NAMES = ["subagent", "get_subagent_result", "steer_subagent"];
+const EXCLUDED_TOOL_NAMES = ["subagent", "Agent", "get_subagent_result", "steer_subagent"];
 
 // ── IO boundary ───────────────────────────────────────────────────────────────
 
@@ -67,6 +70,10 @@ export interface ResourceLoaderOptions {
   noPromptTemplates?: boolean;
   noThemes?: boolean;
   noContextFiles?: boolean;
+  /** Skip loading the parent's extensions into the child (legacy `isolated:` agents). */
+  noExtensions?: boolean;
+  /** Skip loading the skills catalogue into the child (legacy `isolated:` agents). */
+  noSkills?: boolean;
   systemPromptOverride?: () => string;
   /** Override the append system prompt. Receives the current base value; return the replacement. */
   appendSystemPromptOverride?: (base: string[]) => string[];
@@ -234,7 +241,8 @@ export async function createSubagentSession(
   const loaderSettings = deps.io.createLoaderSettingsManager(sessionSettings);
 
   // Children inherit the parent's skills and every extension the composition
-  // root did not exclude (#696).
+  // root did not exclude (#696). A legacy `isolated:` agent is the exception:
+  // it loads neither, so its skill catalogue and extension set are both off.
   //
   // Suppress AGENTS.md/CLAUDE.md and APPEND_SYSTEM.md - upstream's
   // buildSystemPrompt() re-appends both AFTER systemPromptOverride, which
@@ -248,6 +256,7 @@ export async function createSubagentSession(
     noPromptTemplates: true,
     noThemes: true,
     noContextFiles: true,
+    ...(cfg.isolated ? { noExtensions: true, noSkills: true } : {}),
     systemPromptOverride: () => cfg.systemPrompt,
     appendSystemPromptOverride: () => [],
   });

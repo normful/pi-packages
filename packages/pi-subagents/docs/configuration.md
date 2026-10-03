@@ -145,6 +145,7 @@ All fields are optional — sensible defaults for everything.
 | `description`       | filename       | Agent description shown in tool listings                                                                                                                                                                                                      |
 | `display_name`      | —              | Display name for UI (e.g. widget, agent list)                                                                                                                                                                                                 |
 | `tools`             | all 7          | The agent's complete tool allowlist — built-in or extension-registered names. `none` for no tools. See [Tool selection](#tool-selection)                                                                                                      |
+| `disallowed_tools`  | —              | Names subtracted from the effective `tools` set. Read for compatibility with the tintinweb dialect; see [Tool selection](#tool-selection)                                                                                                     |
 | `model`             | inherit parent | Model — `provider/modelId` or fuzzy name (`"haiku"`, `"sonnet"`)                                                                                                                                                                              |
 | `thinking`          | inherit        | off, minimal, low, medium, high, xhigh, max. An unrecognized value is dropped, and the agent inherits the parent's level                                                                                                                      |
 | `max_turns`         | unlimited      | Max agentic turns before graceful shutdown. `0` or omit for unlimited                                                                                                                                                                         |
@@ -233,6 +234,8 @@ tools: none                  # no tools at all
 ```
 
 Omitting `tools` entirely gives the agent all seven built-ins and no extension tools.
+
+`disallowed_tools` subtracts names from whatever `tools` resolved to, which is the tintinweb dialect's denylist: it accepts the same spellings (`disallowed_tools: bash, write` or a sequence), an entry the allowlist never named is a no-op, and it never admits a tool `tools` left out.
 
 Two other settings interact with this list:
 
@@ -338,6 +341,25 @@ This one does not pass silently.
 This extension announces each child once its extensions have bound, and a recent `@gotgenes/pi-permission-system` uses that announcement to notice a child with no node of its own: it records the child in its permission review log and warns once per session that the child's tool calls are ungated.
 The warning names this setting as the likeliest cause, because a failure to load that extension in the child leaves the same absence and the parent cannot tell the two apart.
 Remove the entry to restore gating in child sessions; keep it, knowing the children it spawns are unguarded.
+
+### Restricting spawn models to Pi's scope
+
+Set `scopeModels` to `true` in the global or project `subagents.json` to keep subagents on the models Pi's `enabledModels` setting admits — the same set `/scoped-models` shows.
+It is hand-edited only (no `/subagents:settings` toggle) and off by default.
+
+The allowlist is read from Pi's own settings, project `<cwd>/.pi/settings.json` overriding global `<agentDir>/settings.json`, so changing scope in Pi changes it here too.
+Only exact `provider/modelId` entries take effect; a bare id, a glob, or a `:thinking` suffix is ignored, and if nothing matches, the check is a no-op.
+
+When a spawn's resolved model falls outside the allowlist:
+
+- A model the **caller** named (`model` on the tool call) is refused, with the allowed list in the error — the orchestrator can read it and pick again.
+- A model pinned in agent **frontmatter** or inherited from the **parent** only warns and proceeds: the user chose it, so the spawn is not blocked.
+
+```json
+{
+  "scopeModels": true
+}
+```
 
 ### Abort on interrupt
 

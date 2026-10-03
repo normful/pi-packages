@@ -1,5 +1,5 @@
 {
-  "name": "@gotgenes/pi-autoformat",
+  "name": "@normful/pi-autoformat",
   "version": "5.1.10",
   "description": "Pi extension package for prompt-end auto-formatting",
   "imports": {
@@ -23,13 +23,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gotgenes/pi-packages.git",
+    "url": "git+https://github.com/normful/pi-packages.git",
     "directory": "packages/pi-autoformat"
   },
   "bugs": {
-    "url": "https://github.com/gotgenes/pi-packages/issues"
+    "url": "https://github.com/normful/pi-packages/issues"
   },
-  "homepage": "https://github.com/gotgenes/pi-packages/tree/main/packages/pi-autoformat#readme",
+  "homepage": "https://github.com/normful/pi-packages/tree/main/packages/pi-autoformat#readme",
   "publishConfig": {
     "access": "public"
   },

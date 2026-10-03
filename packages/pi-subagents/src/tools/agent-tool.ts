@@ -3,6 +3,7 @@ import { defineTool } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { AgentTypeRegistry } from "#src/config/agent-types";
+import { modelScopeFor } from "#src/config/model-scope";
 import type { ParentSnapshot } from "#src/lifecycle/parent-snapshot";
 import type {
 	AgentSpawnConfig,
@@ -52,6 +53,8 @@ export interface AgentToolRuntime {
 export type AgentToolSettings = {
 	readonly defaultMaxTurns: number | undefined;
 	readonly maxConcurrent: number;
+	/** Opt-in model-scope enforcement (see `SubagentsSettings.scopeModels`). */
+	readonly scopeModels: boolean;
 };
 
 // ---- Class ----
@@ -78,17 +81,19 @@ export class AgentTool {
 		params: Record<string, unknown>,
 		signal: AbortSignal | undefined,
 		onUpdate: ((update: AgentToolResult<AgentDetails>) => void) | undefined,
-		_ctx: ExtensionContext,
+		ctx: ExtensionContext,
 	) {
 		// Reload custom agents so new .pi/agents/*.md files are picked up without restart
 		this.registry.reload();
 
 		// ---- Config resolution (pure) ----
+		const modelInfo = this.runtime.getModelInfo();
 		const config = resolveSpawnConfig(
 			params,
 			this.registry,
-			this.runtime.getModelInfo(),
+			modelInfo,
 			this.settings,
+			modelScopeFor(ctx.cwd, modelInfo.modelRegistry, this.settings.scopeModels),
 		);
 		if ("error" in config) return textResult(config.error);
 

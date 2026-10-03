@@ -9,6 +9,7 @@
 import type { Model } from "@earendil-works/pi-ai";
 import type { AgentTypeRegistry } from "#src/config/agent-types";
 import { type LockableField, resolveAgentInvocationConfig } from "#src/config/invocation-config";
+import { checkModelScope, type ModelScopeInput } from "#src/config/model-scope";
 import { parseThinkingLevel, thinkingLevelError } from "#src/config/thinking-level";
 import { normalizeMaxTurns } from "#src/lifecycle/turn-limits";
 import type { ModelRegistry } from "#src/session/model-resolver";
@@ -79,6 +80,7 @@ export function resolveSpawnConfig(
   registry: AgentTypeRegistry,
   modelInfo: ModelInfo,
   settings: { readonly defaultMaxTurns: number | undefined },
+  scope?: ModelScopeInput,
 ): ResolvedSpawnConfig | SpawnConfigError {
   // Validated at the door, so the merge below and every layer past it receive a
   // level the SDK recognizes rather than one it would clamp to "off" (Refs #834).
@@ -115,6 +117,18 @@ export function resolveSpawnConfig(
   if (resolution.error) return { error: resolution.error };
   const model = resolution.model;
 
+  // Model-scope policy (opt-in). A caller that named an out-of-scope model is
+  // refused; a frontmatter-pinned or inherited one only warns, so the spawn runs.
+  const scopeVerdict = checkModelScope({
+    model,
+    scope: scope ?? { enabled: false, allowed: undefined },
+    callerSupplied: resolvedConfig.modelFromParams,
+    agentLabel: subagentType,
+    modelInput: resolvedConfig.modelInput,
+  });
+  if (scopeVerdict.kind === "error") return { error: scopeVerdict.message };
+  const scopeNotes = scopeVerdict.kind === "warn" ? [scopeVerdict.message] : [];
+
   const thinking = resolvedConfig.thinking;
   const inheritContext = resolvedConfig.inheritContext;
   const runInBackground = resolvedConfig.runInBackground;
@@ -149,6 +163,7 @@ export function resolveSpawnConfig(
     notes: [
       ...buildFallbackNote(rawType, fellBack),
       ...buildLockNote(subagentType, resolvedConfig.discarded),
+      ...scopeNotes,
     ],
     execution: {
       prompt: params.prompt as string,

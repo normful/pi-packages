@@ -161,6 +161,7 @@ async function captureSessionFactoryIO(parentRegistry: unknown) {
     },
     undefined,
     undefined,
+    { cwd: "/tmp" },
   );
 
   expect(createSubagentSession).toHaveBeenCalled();
@@ -233,6 +234,62 @@ describe("composition root: message renderers", () => {
       "subagent-update",
       "subagent-workspace-notice",
     ]);
+  });
+});
+
+describe("composition root: spawn tool alias", () => {
+  it("registers the spawn tool under both `subagent` and `Agent`", () => {
+    const { pi, tools } = makePi();
+
+    subagentsExtension(pi);
+
+    expect(tools.has("subagent")).toBe(true);
+    expect(tools.has("Agent")).toBe(true);
+    expect(tools.get("Agent").label).toBe("Agent");
+  });
+
+  it("backs the `Agent` alias with the same definition and handler", () => {
+    const { pi, tools } = makePi();
+
+    subagentsExtension(pi);
+
+    expect(tools.get("Agent").execute).toBe(tools.get("subagent").execute);
+    expect(tools.get("Agent").parameters).toBe(tools.get("subagent").parameters);
+  });
+
+  it("spawns through both `subagent` and the `Agent` alias", async () => {
+    vi.mocked(createSubagentSession).mockClear();
+    vi.mocked(createSubagentSession).mockResolvedValue(
+      toSubagentSession(createSubagentSessionStub(createMockSession(), "/sessions/child.jsonl")),
+    );
+    const { pi, tools, fire } = makePi();
+    subagentsExtension(pi);
+    await fire(
+      "session_start",
+      {},
+      makeSessionStartCtx(makeParentRegistry().registry, makeRecordingUI()),
+    );
+
+    const call = (name: string) =>
+      tools.get(name).execute(
+        `tool-call-${name}`,
+        {
+          prompt: "hi",
+          description: "child",
+          subagent_type: "general-purpose",
+          run_in_background: true,
+        },
+        undefined,
+        undefined,
+        { cwd: process.cwd() },
+      );
+
+    await call("subagent");
+    await call("Agent");
+
+    expect(createSubagentSession).toHaveBeenCalledTimes(2);
+    const spawnedTypes = vi.mocked(createSubagentSession).mock.calls.map(([p]) => p.type);
+    expect(spawnedTypes).toEqual(["general-purpose", "general-purpose"]);
   });
 });
 
@@ -386,6 +443,9 @@ describe("composition root: prompt-inheritance wiring", () => {
       },
       undefined,
       undefined,
+      // The tool reads the invocation's cwd for model-scope resolution; the
+      // default (scopeModels off) short-circuits before any file IO.
+      { cwd: process.cwd() },
     );
 
     return vi.mocked(createSubagentSession).mock.calls[0];

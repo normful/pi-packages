@@ -1,5 +1,5 @@
 {
-  "name": "@gotgenes/pi-subagents",
+  "name": "@normful/pi-subagents",
   "version": "21.9.4",
   "type": "module",
   "exports": {
@@ -31,12 +31,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gotgenes/pi-packages.git",
+    "url": "git+https://github.com/normful/pi-packages.git",
     "directory": "packages/pi-subagents"
   },
-  "homepage": "https://github.com/gotgenes/pi-packages/tree/main/packages/pi-subagents#readme",
+  "homepage": "https://github.com/normful/pi-packages/tree/main/packages/pi-subagents#readme",
   "bugs": {
-    "url": "https://github.com/gotgenes/pi-packages/issues"
+    "url": "https://github.com/normful/pi-packages/issues"
   },
   "keywords": [
     "pi-package",
@@ -85,7 +85,7 @@
     "extensions": [
       "./src/index.ts"
     ],
-    "video": "https://github.com/gotgenes/pi-subagents/raw/main/media/demo.mp4",
-    "image": "https://github.com/gotgenes/pi-subagents/raw/main/media/screenshot.png"
+    "video": "https://github.com/normful/pi-subagents/raw/main/media/demo.mp4",
+    "image": "https://github.com/normful/pi-subagents/raw/main/media/screenshot.png"
   }
 }

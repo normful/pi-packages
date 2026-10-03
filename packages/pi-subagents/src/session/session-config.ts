@@ -109,6 +109,12 @@ export interface SessionConfig {
   thinkingLevel: ThinkingLevel | undefined;
   /** Per-agent configured max turns (from agentConfig.maxTurns). */
   agentMaxTurns: number | undefined;
+  /**
+   * true when the agent declared the legacy `isolated:` key. The factory builds
+   * the child's resource loader skills-off and extensions-off for it, and the
+   * prompt was assembled without an inherited identity (generic base).
+   */
+  isolated?: boolean;
 }
 
 // ── Internal helpers ─────────────────────────────────────────────────────────
@@ -171,6 +177,11 @@ export function assembleSessionConfig(
 ): SessionConfig {
   const agentConfig = registry.resolveAgentConfig(type);
 
+  // Legacy `isolated:` agents are self-contained: the factory turns off the
+  // inherited skill/extension set from this flag, and the prompt below is built
+  // without a parent contribution so it falls back to the generic base.
+  const isolated = agentConfig.isolated === true;
+
   const effectiveCwd = options.cwd ?? ctx.cwd;
 
   const toolNames = registry.getToolNamesForType(type);
@@ -185,17 +196,21 @@ export function assembleSessionConfig(
 
   // Build system prompt from the resolved agent config. The strategy is keyed
   // on the child's own provider, so a per-spawn model override moves the child
-  // between transports and takes the right strategy with it.
+  // between transports and takes the right strategy with it. An isolated child
+  // adopts no parent identity at all — `buildAgentPrompt` then renders its
+  // generic base.
   const systemPrompt = io.buildAgentPrompt(
     agentConfig,
     effectiveCwd,
     env,
-    {
-      systemPrompt: ctx.parentSystemPrompt,
-      cwd: ctx.cwd,
-      strategy: ctx.resolvePromptInheritance?.(model?.provider) ?? "full",
-      portablePrompt: ctx.parentPortablePrompt,
-    },
+    isolated
+      ? undefined
+      : {
+          systemPrompt: ctx.parentSystemPrompt,
+          cwd: ctx.cwd,
+          strategy: ctx.resolvePromptInheritance?.(model?.provider) ?? "full",
+          portablePrompt: ctx.parentPortablePrompt,
+        },
     io.loadProjectContext,
   );
 
@@ -212,5 +227,6 @@ export function assembleSessionConfig(
     model,
     thinkingLevel,
     agentMaxTurns,
+    isolated,
   };
 }

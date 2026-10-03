@@ -31,6 +31,14 @@ export interface SubagentsSettings {
    */
   midRunUpdates?: boolean;
   /**
+   * When true, a spawn whose effective model falls outside Pi's `enabledModels`
+   * scope is refused (caller-supplied) or warned about (frontmatter/inherited).
+   * Off by default; hand-edited only — `/subagents:settings` exposes no toggle.
+   * The allowlist is read from Pi's own settings (`<cwd>/.pi/settings.json` over
+   * `<agentDir>/settings.json`), so it stays in step with `/scoped-models`.
+   */
+  scopeModels?: boolean;
+  /**
    * Pi package sources whose extensions child sessions must not load, matched
    * against Pi's configured source string exactly (e.g. `npm:@scope/pkg`).
    * The package's skills, prompts, and themes stay available to children.
@@ -59,6 +67,8 @@ export interface SettingsSnapshot {
   unconsumedSessionRetentionMinutes: number;
   abortAllOnInterrupt: boolean;
   midRunUpdates: boolean;
+  /** Present only when true, so files that never enable it gain no noise. */
+  scopeModels?: boolean;
   /**
    * Present only when non-empty, so files that never set it gain no noise.
    * It must round-trip: the key has no `/subagents:settings` affordance, so a
@@ -92,6 +102,7 @@ export class SettingsManager {
   private _unconsumedSessionRetentionMinutes: number = DEFAULT_UNCONSUMED_RETENTION_MINUTES;
   private _abortAllOnInterrupt: boolean = DEFAULT_ABORT_ALL_ON_INTERRUPT;
   private _midRunUpdates: boolean = DEFAULT_MID_RUN_UPDATES;
+  private _scopeModels: boolean = false;
   private _excludedExtensionPackages: string[] = [];
   private _promptInheritance: Record<string, PromptInheritance> = {};
 
@@ -165,6 +176,12 @@ export class SettingsManager {
     return this._abortAllOnInterrupt;
   }
 
+  // ── scopeModels: hand-edited only; no /subagents:settings affordance ──
+
+  get scopeModels(): boolean {
+    return this._scopeModels;
+  }
+
   // ── excludedExtensionPackages: hand-edited only; no /subagents:settings affordance ──
 
   get excludedExtensionPackages(): readonly string[] {
@@ -204,6 +221,8 @@ export class SettingsManager {
       this._abortAllOnInterrupt = settings.abortAllOnInterrupt;
     if (typeof settings.midRunUpdates === "boolean") this._midRunUpdates = settings.midRunUpdates;
     // Assigned unconditionally: removing the key from disk must clear the value.
+    this._scopeModels = settings.scopeModels === true;
+    // Assigned unconditionally: removing the key from disk must clear the value.
     this._excludedExtensionPackages = [...(settings.excludedExtensionPackages ?? [])];
     this._promptInheritance = { ...settings.promptInheritance };
     this.emit("subagents:settings_loaded", { settings });
@@ -224,6 +243,9 @@ export class SettingsManager {
       abortAllOnInterrupt: this._abortAllOnInterrupt,
       midRunUpdates: this._midRunUpdates,
     };
+    if (this._scopeModels) {
+      snapshot.scopeModels = true;
+    }
     if (this._excludedExtensionPackages.length > 0) {
       snapshot.excludedExtensionPackages = [...this._excludedExtensionPackages];
     }
@@ -367,6 +389,9 @@ function sanitize(raw: unknown): SubagentsSettings {
   }
   if (typeof r.midRunUpdates === "boolean") {
     out.midRunUpdates = r.midRunUpdates;
+  }
+  if (typeof r.scopeModels === "boolean") {
+    out.scopeModels = r.scopeModels;
   }
   if (Array.isArray(r.excludedExtensionPackages)) {
     const sources = r.excludedExtensionPackages
